@@ -6,21 +6,23 @@ This repository contains a simple Python Flask App running with the Google AI Ge
 
 ## Basic request
 
-To send your first API request with the [Gemini API Python SDK](https://github.com/google-gemini/generative-ai-python), make sure you have the right dependencies installed (see installation steps below) and then run the following code:
+To send your first API request with the [Google Gen AI SDK](https://ai.google.dev/gemini-api/docs/libraries#python), make sure you have the right dependencies installed (see installation steps below) and then run the following code:
 
 ```python
-import os
-import google.generativeai as genai
+from google import genai
 
-genai.configure(api_key = os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-1.5-flash')
+client = genai.Client(api_key="GEMINI_API_KEY")
+chat = client.chats.create(model="gemini-2.0-flash")
 
-chat = model.start_chat(history=[])
-response = chat.send_message("In one sentence, explain how AI works to a child.")
+response = chat.send_message("Hello world!")
 print(response.text)
 
-response = chat.send_message("Now explain it like I a Physics PhD student")
+response = chat.send_message("Explain to me how AI works")
 print(response.text)
+
+for message in chat.get_history():
+    print(f'role - {message.role}',end=": ")
+    print(message.parts[0].text)
 ```
 
 ## Setup

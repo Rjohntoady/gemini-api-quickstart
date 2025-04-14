@@ -12,22 +12,18 @@ import io
 from dotenv import load_dotenv
 import os
 
-import google.generativeai as genai
+from google import genai
 
 # Load environment variables from .env file
 load_dotenv()
 
 ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
 
-# WARNING: Do not share code with you API key hard coded in it.
-# Get your Gemini API key from: https://aistudio.google.com/app/apikey
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-
-model = genai.GenerativeModel('gemini-1.5-flash')
+client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+chat_session = client.chats.create(model="gemini-2.0-flash")
 
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
-chat_session = model.start_chat(history=[])
 next_message = ""
 next_image = ""
 
@@ -71,7 +67,7 @@ def upload_file():
 @app.route("/", methods=["GET"])
 def index():
     """Renders the main homepage for the app"""
-    return render_template("index.html", chat_history=chat_session.history)
+    return render_template("index.html", chat_history=chat_session.get_history())
 
 
 @app.route("/chat", methods=["POST"])
@@ -82,7 +78,7 @@ def chat():
     """
     global next_message
     next_message = request.json["message"]
-    print(chat_session.history)
+    print(chat_session.get_history())
 
     return jsonify(success=True)
 
@@ -99,11 +95,10 @@ def stream():
         assistant_response_content = ""
 
         if next_image != "":
-            response = chat_session.send_message([next_message, next_image],
-                                                 stream=True)
+            response = chat_session.send_message_stream([next_message, next_image])
             next_image = ""
         else:
-            response = chat_session.send_message(next_message, stream=True)
+            response = chat_session.send_message_stream(next_message)
             next_message = ""
 
         for chunk in response:
